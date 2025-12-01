@@ -6,4 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_subdirectory(3rd_party)
 
 add_executable(implot3d_mmd_renderer main.cpp)
-target_link_libraries(implot3d_mmd_renderer PRIVATE sokol mmd imgui implot3d)
+target_link_libraries(implot3d_mmd_renderer PRIVATE sokol mmd imgui implot3d BulletDynamics BulletCollision LinearMath)
+target_include_directories(implot3d_mmd_renderer PRIVATE
+    ${CMAKE_SOURCE_DIR}/3rd_party/bullet/src
+)

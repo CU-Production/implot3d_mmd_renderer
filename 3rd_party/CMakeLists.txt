@@ -23,3 +23,11 @@ add_library(implot3d
     implot3d/implot3d_meshes.cpp)
 target_include_directories(implot3d PUBLIC implot3d)
 target_link_libraries(implot3d PRIVATE imgui)
+
+# bullet
+option(BUILD_BULLET2_DEMOS OFF)
+option(BUILD_CPU_DEMOS OFF)
+option(BUILD_EXTRAS OFF)
+option(BUILD_OPENGL3_DEMOS OFF)
+option(BUILD_UNIT_TESTS OFF)
+add_subdirectory(bullet)

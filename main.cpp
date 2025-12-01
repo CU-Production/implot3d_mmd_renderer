@@ -13,6 +13,7 @@
 #include "implot3d.h"
 
 #include "mmd/mmd.hxx"
+#include "mmd-bullet/mmd-bullet.hxx"
 
 #include <iostream>
 #include <vector>
@@ -41,6 +42,7 @@ static struct {
     std::shared_ptr<mmd::Motion> motion;
     std::unique_ptr<mmd::Poser> poser;
     std::unique_ptr<mmd::MotionPlayer> motion_player;
+    std::unique_ptr<mmd::BulletPhysicsReactor> physics_reactor;
 
     float time = 0.0f;
     bool model_loaded = false;
@@ -95,6 +97,14 @@ bool LoadPMXModel(const std::string& filename) {
         // Create poser for the model
         if (g_state.model) {
             g_state.poser = std::make_unique<mmd::Poser>(*g_state.model);
+            // Initialize physics engine
+            g_state.physics_reactor = std::make_unique<mmd::BulletPhysicsReactor>();
+            if (g_state.physics_reactor && g_state.poser) {
+                g_state.physics_reactor->AddPoser(*g_state.poser);
+                std::cout << "  Physics engine initialized" << std::endl;
+                std::cout << "  Rigid bodies: " << g_state.model->GetRigidBodyNum() << std::endl;
+                std::cout << "  Constraints: " << g_state.model->GetConstraintNum() << std::endl;
+            }
             // Create motion player if motion is already loaded
             if (g_state.motion && g_state.poser) {
                 g_state.motion_player = std::make_unique<mmd::MotionPlayer>(*g_state.motion, *g_state.poser);
@@ -256,14 +266,21 @@ void frame(void) {
             // ResetPosing() already called PrePhysicsPosing() and PostPhysicsPosing(),
             // but after SeekFrame() we need to update transforms again
             g_state.poser->PrePhysicsPosing();
+
+            if (g_state.physics_reactor) {
+                // Step physics simulation (dt is in seconds, MMD uses 30 FPS = 1/30 second per frame)
+                const float physics_dt = 1.0f / 30.0f;
+                g_state.physics_reactor->React(physics_dt);
+            }
+
             g_state.poser->PostPhysicsPosing();
 
             // Debug: print frame number every second
-            static size_t last_frame = 0;
-            if (frame != last_frame && frame % 30 == 0) {
-                std::cout << "Animation frame: " << frame << " (time: " << g_state.time << "s)" << std::endl;
-                last_frame = frame;
-            }
+            // static size_t last_frame = 0;
+            // if (frame != last_frame && frame % 30 == 0) {
+            //     std::cout << "Animation frame: " << frame << " (time: " << g_state.time << "s)" << std::endl;
+            //     last_frame = frame;
+            // }
         }
 
         // Apply deformation (calculates deformed vertex positions)
@@ -348,6 +365,10 @@ void frame(void) {
 }
 
 void cleanup(void) {
+    if (g_state.physics_reactor->IsHasFloor()) {
+        g_state.physics_reactor->SetFloor(false);
+    }
+
     ImPlot3D::DestroyContext();
     sgimgui_discard(&g_state.sgimgui);
     simgui_shutdown();
