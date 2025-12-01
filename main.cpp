@@ -11,8 +11,10 @@
 #include "imgui.h"
 #include "util/sokol_imgui.h"
 #include "util/sokol_gfx_imgui.h"
+#include "implot3d.h"
 
 static bool show_test_window = true;
+static bool show_implot3d_test_window = true;
 static bool show_another_window = false;
 
 // application state
@@ -35,6 +37,8 @@ void init(void) {
     sgimgui_desc_t _sgimgui_desc {};
     sgimgui_init(&state.sgimgui, &_sgimgui_desc );
 
+    ImPlot3D::CreateContext();
+
     state.pass_action.colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.0f, 0.0f, 1.0f } };
 }
 
@@ -55,6 +59,7 @@ void frame(void) {
     ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
     ImGui::ColorEdit3("clear color", &state.pass_action.colors[0].clear_value.r);
     if (ImGui::Button("Test Window")) show_test_window ^= 1;
+    if (ImGui::Button("ImPlot3d Test Window")) show_implot3d_test_window ^= 1;
     if (ImGui::Button("Another Window")) show_another_window ^= 1;
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::Text("w: %d, h: %d, dpi_scale: %.1f", sapp_width(), sapp_height(), sapp_dpi_scale());
@@ -76,6 +81,12 @@ void frame(void) {
         ImGui::ShowDemoWindow();
     }
 
+    // 4. Show the ImPlot3d test window. Most of the sample code is in ImPlot3D::ShowDemoWindow()
+    if (show_implot3d_test_window) {
+        ImGui::SetNextWindowPos(ImVec2(330, 20), ImGuiCond_FirstUseEver);
+        ImPlot3D::ShowDemoWindow();
+    }
+
     sg_pass _sg_pass{};
     _sg_pass = { .action = state.pass_action, .swapchain = sglue_swapchain() };
 
@@ -87,6 +98,7 @@ void frame(void) {
 }
 
 void cleanup(void) {
+    ImPlot3D::DestroyContext();
     sgimgui_discard(&state.sgimgui);
     simgui_shutdown();
     sg_shutdown();
