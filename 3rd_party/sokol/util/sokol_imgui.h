@@ -2805,7 +2805,7 @@ SOKOL_API_IMPL void simgui_setup(const simgui_desc_t* desc) {
         attr->format = SG_VERTEXFORMAT_UBYTE4N;
     }
     pip_desc.shader = _simgui.def_shd;
-    pip_desc.index_type = SG_INDEXTYPE_UINT16;
+    pip_desc.index_type = SG_INDEXTYPE_UINT32;
     pip_desc.sample_count = _simgui.desc.sample_count;
     pip_desc.depth.pixel_format = _simgui.desc.depth_format;
     pip_desc.colors[0].pixel_format = _simgui.desc.color_format;
