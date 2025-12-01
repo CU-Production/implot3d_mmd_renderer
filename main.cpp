@@ -1,5 +1,6 @@
 #define SOKOL_IMPL
 #define SOKOL_GLCORE
+#define SOKOL_TRACE_HOOKS
 #include "sokol_app.h"
 #include "sokol_gfx.h"
 #include "sokol_log.h"
@@ -9,6 +10,7 @@
 #define SOKOL_IMGUI_IMPL
 #include "imgui.h"
 #include "util/sokol_imgui.h"
+#include "util/sokol_gfx_imgui.h"
 
 static bool show_test_window = true;
 static bool show_another_window = false;
@@ -16,6 +18,8 @@ static bool show_another_window = false;
 // application state
 static struct {
     sg_pass_action pass_action;
+
+    sgimgui_t sgimgui;
 } state;
 
 void init(void) {
@@ -28,6 +32,9 @@ void init(void) {
     simgui_desc.logger.func = slog_func;
     simgui_setup(&simgui_desc);
 
+    sgimgui_desc_t _sgimgui_desc {};
+    sgimgui_init(&state.sgimgui, &_sgimgui_desc );
+
     state.pass_action.colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={0.0f, 0.0f, 0.0f, 1.0f } };
 }
 
@@ -35,6 +42,11 @@ void frame(void) {
     const int width = sapp_width();
     const int height = sapp_height();
     simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
+
+    if (ImGui::BeginMainMenuBar()) {
+        sgimgui_draw_menu(&state.sgimgui, "sokol-gfx");
+        ImGui::EndMainMenuBar();
+    }
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
@@ -68,12 +80,14 @@ void frame(void) {
     _sg_pass = { .action = state.pass_action, .swapchain = sglue_swapchain() };
 
     sg_begin_pass(&_sg_pass);
+    sgimgui_draw(&state.sgimgui);
     simgui_render();
     sg_end_pass();
     sg_commit();
 }
 
 void cleanup(void) {
+    sgimgui_discard(&state.sgimgui);
     simgui_shutdown();
     sg_shutdown();
 }
