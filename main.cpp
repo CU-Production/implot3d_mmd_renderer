@@ -28,10 +28,6 @@
 #include <windows.h>
 #endif
 
-static bool show_test_window = true;
-static bool show_implot3d_test_window = true;
-static bool show_another_window = false;
-
 // application state
 static struct {
     sg_pass_action pass_action;
@@ -214,6 +210,7 @@ void init(void) {
     simgui_desc.max_vertices = 2000000;
     simgui_desc.logger.func = slog_func;
     simgui_setup(&simgui_desc);
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     sgimgui_desc_t _sgimgui_desc{};
     sgimgui_init(&g_state.sgimgui, &_sgimgui_desc );
@@ -277,44 +274,11 @@ void frame(void) {
     const int height = sapp_height();
     simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
 
+    ImGui::DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_None);
+
     if (ImGui::BeginMainMenuBar()) {
         sgimgui_draw_menu(&g_state.sgimgui, "sokol-gfx");
         ImGui::EndMainMenuBar();
-    }
-
-    // 1. Show a simple window
-    // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
-    static float f = 0.0f;
-    ImGui::Text("Hello, world!");
-    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-    ImGui::ColorEdit3("clear color", &g_state.pass_action.colors[0].clear_value.r);
-    if (ImGui::Button("Test Window")) show_test_window ^= 1;
-    if (ImGui::Button("ImPlot3d Test Window")) show_implot3d_test_window ^= 1;
-    if (ImGui::Button("Another Window")) show_another_window ^= 1;
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    ImGui::Text("w: %d, h: %d, dpi_scale: %.1f", sapp_width(), sapp_height(), sapp_dpi_scale());
-    if (ImGui::Button(sapp_is_fullscreen() ? "Switch to windowed" : "Switch to fullscreen")) {
-        sapp_toggle_fullscreen();
-    }
-
-    // 2. Show another simple window, this time using an explicit Begin/End pair
-    if (show_another_window) {
-        ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiCond_FirstUseEver);
-        ImGui::Begin("Another Window", &show_another_window);
-        ImGui::Text("Hello");
-        ImGui::End();
-    }
-
-    // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowDemoWindow()
-    if (show_test_window) {
-        ImGui::SetNextWindowPos(ImVec2(460, 20), ImGuiCond_FirstUseEver);
-        ImGui::ShowDemoWindow();
-    }
-
-    // 4. Show the ImPlot3d test window. Most of the sample code is in ImPlot3D::ShowDemoWindow()
-    if (show_implot3d_test_window) {
-        ImGui::SetNextWindowPos(ImVec2(330, 20), ImGuiCond_FirstUseEver);
-        ImPlot3D::ShowDemoWindow();
     }
 
     // draw mmd mesh using implot3d
@@ -329,7 +293,7 @@ void frame(void) {
         }
 
         // Choose line color
-        static bool set_line_color = true;
+        static bool set_line_color = false;
         static ImVec4 line_color = ImVec4(0.2f, 0.2f, 0.2f, 0.8f);
         ImGui::Checkbox("Line Color", &set_line_color);
         if (set_line_color) {
@@ -363,7 +327,6 @@ void frame(void) {
 
             // Plot mesh
             ImPlot3D::PlotMesh("MMD", g_state.mmd_vtx.data(), g_state.mmd_idx.data(), g_state.mmd_vtx.size(), g_state.mmd_idx.size());
-            // ImPlot3D::PlotMesh("Duck", ImPlot3D::duck_vtx, ImPlot3D::duck_idx, ImPlot3D::DUCK_VTX_COUNT, ImPlot3D::DUCK_IDX_COUNT);
 
             ImPlot3D::EndPlot();
         }
