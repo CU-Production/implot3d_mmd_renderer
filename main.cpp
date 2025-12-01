@@ -235,8 +235,11 @@ void init(void) {
 }
 
 void frame(void) {
+    const float dt = sapp_frame_duration();
+
     // Update animation and deformed vertices
     // Ensure Deform() is called before UpdateDeformedVertices() to populate pose_image
+    g_state.time += dt;
     if (g_state.model_loaded && g_state.poser) {
         // Reset posing first (clears all bone poses and morphs)
         g_state.poser->ResetPosing();
@@ -272,7 +275,7 @@ void frame(void) {
 
     const int width = sapp_width();
     const int height = sapp_height();
-    simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
+    simgui_new_frame({ width, height, dt, sapp_dpi_scale() });
 
     ImGui::DockSpaceOverViewport(0, nullptr, ImGuiDockNodeFlags_None);
 
